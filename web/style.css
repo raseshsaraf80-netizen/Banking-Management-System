@@ -179,6 +179,83 @@ h1, h2, h3, h4 {
   border-color: rgba(245, 158, 11, 0.45);
 }
 
+.env-switch-row {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.78rem;
+}
+
+.auth-api-status {
+  color: #cbd5e1;
+}
+
+.btn-link-light {
+  background: none;
+  border: none;
+  color: #5eead4;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.select-compact {
+  padding: 5px 8px;
+  font-size: 0.8rem;
+  border-radius: 6px;
+}
+
+.chip-del {
+  margin-left: 5px;
+  color: #94a3b8;
+  font-weight: 700;
+}
+
+.chip-del:hover {
+  color: #dc2626;
+}
+
+input[type="range"] {
+  padding: 0;
+  border: none;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+.toast-stack {
+  position: fixed;
+  top: 74px;
+  right: 22px;
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 360px;
+}
+
+.toast {
+  padding: 11px 15px;
+  border-radius: 10px;
+  font-size: 0.87rem;
+  font-weight: 600;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.16);
+  background: #0f172a;
+  color: #fff;
+}
+
+.toast.ok {
+  background: #0f766e;
+}
+
+.toast.err {
+  background: #dc2626;
+}
+
 .auth-panel {
   display: grid;
   place-items: center;

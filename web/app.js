@@ -1,10 +1,15 @@
 // Author: Rasesh Saraf
-// Single API base URL constant: points to your deployed Render backend (use http://localhost:7070 for local API testing).
+// Single API base URL constant: points to your deployed Render backend (or toggle to localhost:7070 via UI).
 const API_BASE_URL = "https://banking-management-system-71ep.onrender.com";
+
+function getActiveApiBase() {
+  return localStorage.getItem("bankApiOverride") || API_BASE_URL;
+}
 
 let authToken = sessionStorage.getItem("bankToken") || "";
 let currentUser = JSON.parse(sessionStorage.getItem("bankUser") || "null");
 let customerAccounts = [];
+let allCustomerTransactions = [];
 let adminCustomers = [];
 let adminAccounts = [];
 let adminLogLines = [];
@@ -65,10 +70,22 @@ function escapeHtml(str) {
     .replaceAll('"', "&quot;");
 }
 
+function pushToast(message, isError = false) {
+  const stack = document.getElementById("toastStack");
+  const div = document.createElement("div");
+  div.className = `toast ${isError ? "err" : "ok"}`;
+  div.textContent = message;
+  stack.appendChild(div);
+  setTimeout(() => div.remove(), 4200);
+}
+
 function showBanner(el, message, isError = true) {
   el.textContent = message;
   el.className = `banner ${isError ? "error" : "success"}`;
   el.classList.remove("hidden");
+  if (el === appAlert) {
+    pushToast(message, isError);
+  }
 }
 
 function hideBanners() {
@@ -76,20 +93,48 @@ function hideBanners() {
   appAlert.classList.add("hidden");
 }
 
+function updateBackendToggleUi() {
+  const active = getActiveApiBase();
+  const isLocal = active.includes("localhost");
+  document.getElementById("toggleBackendBtn").textContent =
+    isLocal ? "Switch to Cloud (Render)" : "Switch to Localhost:7070";
+}
+
+document.getElementById("toggleBackendBtn").addEventListener("click", () => {
+  const isLocal = getActiveApiBase().includes("localhost");
+  if (isLocal) {
+    localStorage.removeItem("bankApiOverride");
+  } else {
+    localStorage.setItem("bankApiOverride", "http://localhost:7070");
+  }
+  updateBackendToggleUi();
+  checkApiHealth();
+});
+
 async function checkApiHealth() {
   const pill = document.getElementById("apiHealthPill");
+  const authStat = document.getElementById("authApiStatus");
+  const base = getActiveApiBase();
+  const slowTimer = setTimeout(() => {
+    authStat.textContent = `Waking up ${base.includes("localhost") ? "local" : "Render"} backend...`;
+    pill.innerHTML = '<span class="health-dot"></span>Waking Server...';
+  }, 2000);
+
   try {
-    const res = await fetch(`${API_BASE_URL}/health`);
+    const res = await fetch(`${base}/health`);
+    clearTimeout(slowTimer);
     if (res.ok) {
       pill.className = "health-pill online";
       pill.innerHTML = '<span class="health-dot"></span>API Connected';
+      authStat.textContent = `Connected: ${base.includes("localhost") ? "localhost:7070" : "Render Cloud"}`;
       return;
     }
   } catch (_) {
-    // Offline fallback below
+    clearTimeout(slowTimer);
   }
   pill.className = "health-pill offline";
   pill.innerHTML = '<span class="health-dot"></span>API Offline';
+  authStat.textContent = `Offline (${base.includes("localhost") ? "localhost:7070" : "Render"})`;
 }
 
 async function apiFetch(path, options = {}) {
@@ -100,7 +145,7 @@ async function apiFetch(path, options = {}) {
   if (authToken) {
     headers["Authorization"] = `Bearer ${authToken}`;
   }
-  const response = await fetch(`${API_BASE_URL}${path}`, { ...options, headers });
+  const response = await fetch(`${getActiveApiBase()}${path}`, { ...options, headers });
   if (options.rawResponse) {
     if (!response.ok) {
       const errData = await response.json().catch(() => ({}));
@@ -131,6 +176,7 @@ function logout() {
   authToken = "";
   currentUser = null;
   customerAccounts = [];
+  allCustomerTransactions = [];
   adminCustomers = [];
   adminAccounts = [];
   adminLogLines = [];
@@ -173,7 +219,9 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   hideBanners();
   const btn = e.submitter;
+  const orig = btn.textContent;
   btn.disabled = true;
+  btn.textContent = "Signing in...";
   try {
     const data = await apiFetch("/api/auth/login", {
       method: "POST",
@@ -187,6 +235,7 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
     showBanner(authAlert, err.message, true);
   } finally {
     btn.disabled = false;
+    btn.textContent = orig;
   }
 });
 
@@ -194,7 +243,9 @@ document.getElementById("registerForm").addEventListener("submit", async (e) => 
   e.preventDefault();
   hideBanners();
   const btn = e.submitter;
+  const orig = btn.textContent;
   btn.disabled = true;
+  btn.textContent = "Creating profile...";
   try {
     const data = await apiFetch("/api/auth/register", {
       method: "POST",
@@ -211,6 +262,7 @@ document.getElementById("registerForm").addEventListener("submit", async (e) => 
     showBanner(authAlert, err.message, true);
   } finally {
     btn.disabled = false;
+    btn.textContent = orig;
   }
 });
 
@@ -262,6 +314,8 @@ document.getElementById("logoutBtn").addEventListener("click", logout);
 document.getElementById("globalRefreshBtn").addEventListener("click", refreshPortalData);
 
 async function renderAppState() {
+  updateBackendToggleUi();
+  checkApiHealth();
   if (!authToken || !currentUser) {
     authScreen.classList.remove("hidden");
     appShell.classList.add("hidden");
@@ -286,7 +340,6 @@ async function renderAppState() {
   renderProfileTab();
   renderBeneficiaries();
   runAllCalculators();
-  checkApiHealth();
   await refreshPortalData();
 }
 
@@ -374,7 +427,7 @@ function renderBalanceTrendSvg(txns) {
   const coords = points.map((val, idx) => {
     const x = pad + (idx / (points.length - 1)) * (w - pad * 2);
     const y = h - pad - ((val - min) / span) * (h - pad * 2);
-    return { x, y, val };
+    return { x, y };
   });
 
   const polyline = coords.map((c) => `${c.x.toFixed(1)},${c.y.toFixed(1)}`).join(" ");
@@ -414,8 +467,11 @@ function renderTopAccountsBarSvg(accounts) {
   return `<svg width="100%" height="145" viewBox="0 0 330 145">${rows}</svg>`;
 }
 
-/* ================= RECEIPT MODAL ================= */
-function openReceipt(title, details) {
+/* ================= MODAL (RECEIPT & CUSTOMER DETAILS) ================= */
+function openInfoModal(badgeText, title, details, showPrint = true) {
+  document.getElementById("modalBadge").textContent = badgeText;
+  document.getElementById("modalTitle").textContent = title;
+  document.getElementById("printReceiptBtn").classList.toggle("hidden", !showPrint);
   const body = document.getElementById("receiptBody");
   body.innerHTML = details.map(([k, v]) =>
     `<div class="receipt-row"><span>${escapeHtml(k)}</span><strong>${escapeHtml(v)}</strong></div>`
@@ -451,9 +507,16 @@ function renderBeneficiaries() {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "chip-recipient";
-    btn.textContent = `${p.name} (${p.acc})`;
-    btn.addEventListener("click", () => {
+    btn.innerHTML = `${escapeHtml(p.name)} (${escapeHtml(p.acc)}) <span class="chip-del" title="Remove">&times;</span>`;
+    btn.addEventListener("click", (ev) => {
+      if (ev.target.classList.contains("chip-del")) {
+        const updated = getBeneficiaries().filter((item) => item.acc !== p.acc);
+        localStorage.setItem(getPayeeStorageKey(), JSON.stringify(updated));
+        renderBeneficiaries();
+        return;
+      }
       document.getElementById("toAccount").value = p.acc;
+      updateTransferAfterPreview();
     });
     wrap.appendChild(btn);
   });
@@ -472,7 +535,7 @@ document.getElementById("addPayeeBtn").addEventListener("click", () => {
   document.getElementById("newPayeeName").value = "";
   document.getElementById("newPayeeAcc").value = "";
   renderBeneficiaries();
-  showBanner(appAlert, `Saved ${name} (${acc}) to beneficiaries.`, false);
+  pushToast(`Saved beneficiary ${name} (${acc})`);
 });
 
 /* ================= CUSTOMER PORTAL ================= */
@@ -531,13 +594,35 @@ async function loadCustomerPortal() {
   renderCustomerAccountCards();
 
   if (customerAccounts.length > 0) {
-    const txns = await apiFetch(`/api/accounts/${encodeURIComponent(customerAccounts[0].accountNumber)}/transactions?limit=25`);
-    document.getElementById("kpiTxnCount").textContent = String(txns.length);
-    document.getElementById("balanceTrendWrap").innerHTML = renderBalanceTrendSvg(txns);
+    // Fetch transactions across ALL owned accounts so Overview reflects full portfolio activity
+    const perAccountLists = await Promise.all(
+      customerAccounts.map((acc) =>
+        apiFetch(`/api/accounts/${encodeURIComponent(acc.accountNumber)}/transactions?limit=25`)
+      )
+    );
+    allCustomerTransactions = perAccountLists
+      .flat()
+      .sort((a, b) => String(b.timestamp).localeCompare(String(a.timestamp)));
+
+    document.getElementById("kpiTxnCount").textContent = String(allCustomerTransactions.length);
+
+    const trendSel = document.getElementById("trendAccountSel");
+    const prevTrend = trendSel.value;
+    trendSel.innerHTML = "";
+    customerAccounts.forEach((acc) => {
+      const opt = document.createElement("option");
+      opt.value = acc.accountNumber;
+      opt.textContent = acc.accountNumber;
+      trendSel.appendChild(opt);
+    });
+    if (prevTrend && customerAccounts.some((a) => a.accountNumber === prevTrend)) {
+      trendSel.value = prevTrend;
+    }
+    updateBalanceTrendChart();
 
     let credits = 0;
     let debits = 0;
-    txns.forEach((t) => {
+    allCustomerTransactions.forEach((t) => {
       const a = Number(t.amount);
       if (t.type === "DEPOSIT" || t.type === "TRANSFER_IN" || t.type === "INTEREST") credits += a;
       else debits += a;
@@ -546,18 +631,19 @@ async function loadCustomerPortal() {
 
     const recentEl = document.getElementById("overviewRecentTxns");
     recentEl.innerHTML = "";
-    txns.slice(0, 4).forEach((t) => {
+    allCustomerTransactions.slice(0, 5).forEach((t) => {
       const isCredit = t.type === "DEPOSIT" || t.type === "TRANSFER_IN" || t.type === "INTEREST";
       const row = document.createElement("div");
       row.className = "list-row";
-      row.innerHTML = `<div><strong>${escapeHtml(t.type)}</strong>
-        <div class="muted-text">${escapeHtml(t.description || t.accountNumber)}</div></div>
+      row.innerHTML = `<div><strong>${escapeHtml(t.accountNumber)} &bull; ${escapeHtml(t.type)}</strong>
+        <div class="muted-text">${escapeHtml(t.description || "")}</div></div>
         <strong style="color:${isCredit ? "#0f766e" : "#dc2626"}">${isCredit ? "+" : "-"}${fmtMoney(t.amount)}</strong>`;
       recentEl.appendChild(row);
     });
 
     await loadStatementTable();
   } else {
+    allCustomerTransactions = [];
     document.getElementById("kpiTxnCount").textContent = "0";
     document.getElementById("balanceTrendWrap").innerHTML = '<div class="muted-text">Open an account to see balance trajectory.</div>';
     document.getElementById("cashflowChartWrap").innerHTML = '<div class="muted-text">Open an account to see cashflow analytics.</div>';
@@ -565,6 +651,14 @@ async function loadCustomerPortal() {
     document.getElementById("txnBody").innerHTML = "";
   }
 }
+
+function updateBalanceTrendChart() {
+  const accNo = document.getElementById("trendAccountSel").value;
+  const filtered = allCustomerTransactions.filter((t) => t.accountNumber === accNo);
+  document.getElementById("balanceTrendWrap").innerHTML = renderBalanceTrendSvg(filtered);
+}
+
+document.getElementById("trendAccountSel").addEventListener("change", updateBalanceTrendChart);
 
 function renderCustomerAccountCards() {
   const grid = document.getElementById("accountsGrid");
@@ -602,6 +696,7 @@ function renderCustomerAccountCards() {
     btn.addEventListener("click", () => {
       navigator.clipboard?.writeText(btn.dataset.copy);
       btn.textContent = "Copied!";
+      pushToast(`Copied ${btn.dataset.copy} to clipboard`);
       setTimeout(() => (btn.textContent = "Copy #"), 1200);
     });
   });
@@ -661,12 +756,27 @@ function updateLiveBalances(accounts) {
   const fromAcc = accounts.find((a) => a.accountNumber === fromNo);
   document.getElementById("cashLiveBalance").textContent = cashAcc ? fmtMoney(cashAcc.balance) : "₹0.00";
   document.getElementById("transferLiveBalance").textContent = fromAcc ? fmtMoney(fromAcc.balance) : "₹0.00";
+  updateTransferAfterPreview();
+}
+
+function updateTransferAfterPreview() {
+  const accounts = currentUser?.role === "ADMIN" ? adminAccounts : customerAccounts;
+  const fromNo = document.getElementById("fromAccount").value;
+  const fromAcc = accounts.find((a) => a.accountNumber === fromNo);
+  const amt = Number(document.getElementById("transferAmount").value || 0);
+  const preview = document.getElementById("transferAfterPreview");
+  if (!fromAcc || amt <= 0) {
+    preview.textContent = "";
+    return;
+  }
+  preview.textContent = `After transfer: ${fmtMoney(Number(fromAcc.balance) - amt)}`;
 }
 
 document.getElementById("cashAccount").addEventListener("change", () =>
   updateLiveBalances(currentUser?.role === "ADMIN" ? adminAccounts : customerAccounts));
 document.getElementById("fromAccount").addEventListener("change", () =>
   updateLiveBalances(currentUser?.role === "ADMIN" ? adminAccounts : customerAccounts));
+document.getElementById("transferAmount").addEventListener("input", updateTransferAfterPreview);
 
 document.querySelectorAll(".chip-amt").forEach((chip) => {
   chip.addEventListener("click", () => {
@@ -715,7 +825,7 @@ document.getElementById("cashForm").addEventListener("submit", async (e) => {
     document.getElementById("cashAmount").value = "";
     document.getElementById("cashDesc").value = "";
     await refreshPortalData();
-    openReceipt("Cash Operation", [
+    openInfoModal("TRANSACTION COMPLETED", "SRM Trust Bank Receipt", [
       ["Reference ID", `#${txn.txnId}`],
       ["Account", accNo],
       ["Operation", txn.type],
@@ -733,10 +843,14 @@ document.getElementById("cashForm").addEventListener("submit", async (e) => {
 document.getElementById("transferForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   hideBanners();
-  const btn = e.submitter;
-  btn.disabled = true;
   const from = document.getElementById("fromAccount").value;
   const to = document.getElementById("toAccount").value.trim().toUpperCase();
+  if (from === to) {
+    showBanner(appAlert, "Source and destination accounts cannot be the same.", true);
+    return;
+  }
+  const btn = e.submitter;
+  btn.disabled = true;
   const amt = Number(document.getElementById("transferAmount").value);
   const desc = document.getElementById("transferDesc").value.trim();
   try {
@@ -747,11 +861,12 @@ document.getElementById("transferForm").addEventListener("submit", async (e) => 
     document.getElementById("transferAmount").value = "";
     document.getElementById("transferDesc").value = "";
     await refreshPortalData();
-    openReceipt("Atomic Fund Transfer", [
+    openInfoModal("TRANSACTION COMPLETED", "Atomic Fund Transfer Receipt", [
       ["From Account", from],
       ["To Account", to],
       ["Amount Transferred", fmtMoney(amt)],
       ["Remarks", desc || "Fund transfer"],
+      ["Timestamp", new Date().toLocaleString()],
       ["Status", "COMMITTED (ACID)"]
     ]);
   } catch (err) {
@@ -778,6 +893,7 @@ async function loadStatementTable() {
   const from = document.getElementById("stmtFrom").value;
   const to = document.getElementById("stmtTo").value;
   const typeFilter = document.getElementById("stmtType").value;
+  const keyword = (document.getElementById("stmtKeyword").value || "").toLowerCase().trim();
 
   const params = new URLSearchParams();
   if (from) params.set("from", from);
@@ -788,6 +904,9 @@ async function loadStatementTable() {
     let txns = await apiFetch(`/api/accounts/${encodeURIComponent(accNo)}/transactions${query}`);
     if (typeFilter !== "ALL") {
       txns = txns.filter((t) => t.type === typeFilter);
+    }
+    if (keyword) {
+      txns = txns.filter((t) => (t.description || "").toLowerCase().includes(keyword) || String(t.txnId).includes(keyword));
     }
 
     let credits = 0;
@@ -806,7 +925,7 @@ async function loadStatementTable() {
 
     body.innerHTML = "";
     if (!txns.length) {
-      body.innerHTML = '<tr><td colspan="6" class="muted-text">No transactions match the selected filters.</td></tr>';
+      body.innerHTML = '<tr><td colspan="7" class="muted-text">No transactions match the selected filters.</td></tr>';
       return;
     }
     txns.forEach((t) => {
@@ -819,7 +938,19 @@ async function loadStatementTable() {
         <td style="color:${isCredit ? "#0f766e" : "#dc2626"};font-weight:700">${isCredit ? "+" : "-"}${fmtMoney(t.amount)}</td>
         <td><strong>${fmtMoney(t.balanceAfter)}</strong></td>
         <td>${escapeHtml(t.description || "")}</td>
+        <td class="no-print"><button type="button" class="btn-xs btn-xs-dark view-rcpt-btn">Receipt</button></td>
       `;
+      tr.querySelector(".view-rcpt-btn").addEventListener("click", () => {
+        openInfoModal("TRANSACTION RECORD", "SRM Trust Bank Receipt", [
+          ["Reference ID", `#${t.txnId}`],
+          ["Account", t.accountNumber],
+          ["Type", t.type],
+          ["Amount", fmtMoney(t.amount)],
+          ["Balance After", fmtMoney(t.balanceAfter)],
+          ["Description", t.description || "-"],
+          ["Timestamp", String(t.timestamp).replace("T", " ").slice(0, 19)]
+        ]);
+      });
       body.appendChild(tr);
     });
   } catch (err) {
@@ -829,12 +960,14 @@ async function loadStatementTable() {
 
 document.getElementById("stmtAccount").addEventListener("change", loadStatementTable);
 document.getElementById("stmtType").addEventListener("change", loadStatementTable);
+document.getElementById("stmtKeyword").addEventListener("input", loadStatementTable);
 document.getElementById("loadStmtBtn").addEventListener("click", loadStatementTable);
 document.getElementById("printStmtBtn").addEventListener("click", () => window.print());
 document.getElementById("resetStmtBtn").addEventListener("click", () => {
   document.getElementById("stmtFrom").value = "";
   document.getElementById("stmtTo").value = "";
   document.getElementById("stmtType").value = "ALL";
+  document.getElementById("stmtKeyword").value = "";
   loadStatementTable();
 });
 
@@ -860,6 +993,7 @@ document.getElementById("downloadCsvBtn").addEventListener("click", async () => 
     a.download = `${accNo}_statement.csv`;
     a.click();
     URL.revokeObjectURL(url);
+    pushToast(`Downloaded ${accNo}_statement.csv`);
   } catch (err) {
     showBanner(appAlert, err.message, true);
   }
@@ -948,7 +1082,7 @@ function renderAdminCustomersTable() {
   adminCustomers
     .filter((c) => !q || c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q) || c.phone.includes(q))
     .forEach((c) => {
-      const owned = adminAccounts.filter((a) => a.customerId === c.customerId).length;
+      const ownedAccs = adminAccounts.filter((a) => a.customerId === c.customerId);
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>#${c.customerId}</td>
@@ -957,8 +1091,22 @@ function renderAdminCustomersTable() {
         <td>${escapeHtml(c.phone)}</td>
         <td>${escapeHtml(c.address || "-")}</td>
         <td><span class="badge ${c.role === "ADMIN" ? "badge-warn" : "badge-info"}">${c.role}</span></td>
-        <td>${owned}</td>
+        <td>${ownedAccs.length}</td>
+        <td><button type="button" class="btn-xs btn-xs-dark adm-cust-view">View</button></td>
       `;
+      tr.querySelector(".adm-cust-view").addEventListener("click", () => {
+        const total = ownedAccs.reduce((s, a) => s + Number(a.balance), 0);
+        const rows = [
+          ["Customer ID", `#${c.customerId}`],
+          ["Name", c.name],
+          ["Email", c.email],
+          ["Phone", c.phone],
+          ["Address", c.address || "-"],
+          ["Total Balance", fmtMoney(total)],
+          ...ownedAccs.map((a) => [`Account ${a.accountNumber}`, `${a.accountType} • ${a.status} • ${fmtMoney(a.balance)}`])
+        ];
+        openInfoModal("CUSTOMER PROFILE", c.name, rows, false);
+      });
       body.appendChild(tr);
     });
 }
@@ -1023,6 +1171,23 @@ function renderAdminAccountsTable() {
   });
 }
 
+document.getElementById("admExportAccountsBtn").addEventListener("click", () => {
+  const custById = Object.fromEntries(adminCustomers.map((c) => [c.customerId, c]));
+  const lines = ["account_number,customer_name,email,type,balance,status,opened_on"];
+  adminAccounts.forEach((a) => {
+    const owner = custById[a.customerId];
+    lines.push(`${a.accountNumber},"${owner?.name || ""}","${owner?.email || ""}",${a.accountType},${a.balance},${a.status},${a.openedOn}`);
+  });
+  const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "bank_accounts_summary.csv";
+  a.click();
+  URL.revokeObjectURL(url);
+  pushToast("Exported bank_accounts_summary.csv");
+});
+
 function renderAdminLogs() {
   const q = (document.getElementById("admLogSearch").value || "").toLowerCase().trim();
   const container = document.getElementById("admLogList");
@@ -1035,7 +1200,6 @@ function renderAdminLogs() {
 document.getElementById("admCustSearch").addEventListener("input", renderAdminCustomersTable);
 document.getElementById("admAccSearch").addEventListener("input", renderAdminAccountsTable);
 document.getElementById("admAccStatusFilter").addEventListener("change", renderAdminAccountsTable);
-document.getElementById("admAccSearchBtn").addEventListener("click", renderAdminAccountsTable);
 document.getElementById("admLogSearch").addEventListener("input", renderAdminLogs);
 document.getElementById("refreshLogsBtn").addEventListener("click", loadAdminPortal);
 
@@ -1060,6 +1224,19 @@ document.querySelectorAll(".calc-tab").forEach((btn) => {
   });
 });
 
+function syncRangePair(inputId, rangeId, fn) {
+  const numEl = document.getElementById(inputId);
+  const rngEl = document.getElementById(rangeId);
+  numEl.addEventListener("input", () => {
+    rngEl.value = numEl.value;
+    fn();
+  });
+  rngEl.addEventListener("input", () => {
+    numEl.value = rngEl.value;
+    fn();
+  });
+}
+
 function updateEmiCalc() {
   const p = Math.max(0, Number(document.getElementById("emiPrincipal").value));
   const annual = Math.max(0, Number(document.getElementById("emiRate").value));
@@ -1082,7 +1259,6 @@ function updateEmiCalc() {
     fmtMoney(total)
   );
 
-  // Build Year-by-Year Amortization Table
   const schedBody = document.getElementById("emiScheduleBody");
   schedBody.innerHTML = "";
   let bal = p;
@@ -1108,7 +1284,7 @@ function updateEmiCalc() {
 function updateFdCalc() {
   const p = Math.max(0, Number(document.getElementById("fdPrincipal").value));
   const r = Math.max(0, Number(document.getElementById("fdRate").value)) / 100;
-  const t = Math.max(0, Number(document.getElementById("fdYears").value));
+  const t = Math.max(0, Math.min(25, Number(document.getElementById("fdYears").value)));
   const freq = Math.max(1, Number(document.getElementById("fdFreq").value));
   const maturity = p * Math.pow(1 + r / freq, freq * t);
   const interest = Math.max(0, maturity - p);
@@ -1126,20 +1302,38 @@ function updateFdCalc() {
     "Maturity",
     fmtMoney(maturity)
   );
+
+  const schedBody = document.getElementById("fdScheduleBody");
+  schedBody.innerHTML = "";
+  for (let yr = 1; yr <= Math.ceil(t); yr++) {
+    const val = p * Math.pow(1 + r / freq, freq * yr);
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>Year ${yr}</td><td>${fmtMoney(p)}</td><td>${fmtMoney(val - p)}</td><td><strong>${fmtMoney(val)}</strong></td>`;
+    schedBody.appendChild(tr);
+  }
 }
 
 function updateSavingsCalc() {
   const start = Math.max(0, Number(document.getElementById("savStart").value));
   const monthly = Math.max(0, Number(document.getElementById("savMonthly").value));
-  const years = Math.max(1, Number(document.getElementById("savYears").value));
+  const years = Math.max(1, Math.min(30, Number(document.getElementById("savYears").value)));
   const mRate = 0.035 / 12;
   let bal = start;
-  for (let m = 0; m < years * 12; m++) {
-    bal = (bal + monthly) * (1 + mRate);
+
+  const schedBody = document.getElementById("savScheduleBody");
+  schedBody.innerHTML = "";
+  for (let yr = 1; yr <= years; yr++) {
+    for (let m = 0; m < 12; m++) {
+      bal = (bal + monthly) * (1 + mRate);
+    }
+    const yrContrib = start + monthly * yr * 12;
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>Year ${yr}</td><td>${fmtMoney(yrContrib)}</td><td>${fmtMoney(Math.max(0, bal - yrContrib))}</td><td><strong>${fmtMoney(bal)}</strong></td>`;
+    schedBody.appendChild(tr);
   }
+
   const contrib = start + monthly * years * 12;
   const interest = Math.max(0, bal - contrib);
-
   document.getElementById("savTotalOut").textContent = fmtMoney(bal);
   document.getElementById("savContribOut").textContent = fmtMoney(contrib);
   document.getElementById("savInterestOut").textContent = fmtMoney(interest);
@@ -1160,8 +1354,9 @@ function runAllCalculators() {
   updateSavingsCalc();
 }
 
-["emiPrincipal", "emiRate", "emiMonths"].forEach((id) =>
-  document.getElementById(id).addEventListener("input", updateEmiCalc));
+syncRangePair("emiPrincipal", "emiPrincipalRange", updateEmiCalc);
+syncRangePair("emiRate", "emiRateRange", updateEmiCalc);
+syncRangePair("emiMonths", "emiMonthsRange", updateEmiCalc);
 ["fdPrincipal", "fdRate", "fdYears", "fdFreq"].forEach((id) =>
   document.getElementById(id).addEventListener("input", updateFdCalc));
 ["savStart", "savMonthly", "savYears"].forEach((id) =>
@@ -1236,12 +1431,26 @@ function appendChatBubble(text, who) {
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
+function localPreLoginFaq(q) {
+  const lower = q.toLowerCase();
+  if (lower.includes("minimum") || lower.includes("savings")) {
+    return "Savings accounts require a minimum balance of ₹1,000, allow 5 withdrawals/month, and earn 3.5% p.a. Sign in to use the full server assistant.";
+  }
+  if (lower.includes("overdraft") || lower.includes("current")) {
+    return "Current accounts include a ₹10,000 overdraft limit and earn 0% interest. Sign in for full assistant help.";
+  }
+  if (lower.includes("export") || lower.includes("csv")) {
+    return "Sign in, open Statements & Export, and click Download CSV or Print / PDF.";
+  }
+  return "Please sign in to ask the live banking assistant (or click a demo login button to explore).";
+}
+
 async function sendChatPrompt(msg) {
+  appendChatBubble(msg, "user");
   if (!authToken) {
-    appendChatBubble("Please sign in first to ask the banking assistant.", "bot");
+    appendChatBubble(localPreLoginFaq(msg), "bot");
     return;
   }
-  appendChatBubble(msg, "user");
   try {
     const data = await apiFetch("/api/chat", {
       method: "POST",
