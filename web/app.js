@@ -1,6 +1,6 @@
 // Author: Rasesh Saraf
-// Single API base URL constant: update this for Render/Railway/Fly.io when deploying to Vercel.
-const API_BASE_URL = "http://localhost:7070";
+// Single API base URL constant: points to your deployed Render backend (use http://localhost:7070 for local API testing).
+const API_BASE_URL = "https://banking-management-system-71ep.onrender.com";
 
 let authToken = sessionStorage.getItem("bankToken") || "";
 let currentUser = JSON.parse(sessionStorage.getItem("bankUser") || "null");
