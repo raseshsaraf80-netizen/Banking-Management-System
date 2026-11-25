@@ -1,6 +1,8 @@
 // Author: Rasesh Saraf
-// Local API base URL: uses same-origin when served by ApiServer on port 8080.
-const API_BASE_URL = window.location.port === "8080" ? "" : "http://localhost:8080";
+// Uses local server on localhost, and Render backend when hosted on Vercel.
+const API_BASE_URL = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+  ? (window.location.port === "8080" ? "" : "http://localhost:8080")
+  : "https://banking-management-system-71ep.onrender.com";
 
 let authToken = sessionStorage.getItem("bankToken") || "";
 let currentUser = JSON.parse(sessionStorage.getItem("bankUser") || "null");
