@@ -27,7 +27,7 @@ public class ChatbotService {
     private static final String DEFAULT_API_URL = "https://api.anthropic.com/v1/messages";
     private static final String DEFAULT_MODEL = "claude-sonnet-5-5";
     private static final String ANTHROPIC_VERSION = "2023-06-01";
-    private static final String DEFAULT_GEMINI_MODEL = "gemini-2.5-flash";
+    private static final String DEFAULT_GEMINI_MODEL = "gemini-2.0-flash";
     private static final int MAX_TOKENS = 500;
     private static final int MAX_HISTORY_TURNS = 6;
     private static final Duration TIMEOUT = Duration.ofSeconds(10);
@@ -198,7 +198,7 @@ public class ChatbotService {
 
             String[] candidatesToTry = {
                     geminiModel,
-                    "gemini-2.0-flash",
+                    "gemini-2.5-flash",
                     "gemini-flash-latest"
             };
             String bodyJson = mapper.writeValueAsString(payload);
