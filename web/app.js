@@ -164,20 +164,55 @@ function logout() {
   renderAppState();
 }
 
+const TAB_ROUTES = {
+  "overview": "/overview",
+  "accounts": "/accounts",
+  "transfers": "/transfers",
+  "statements": "/statements",
+  "calculators": "/calculators",
+  "profile": "/profile",
+  "admin-overview": "/admin",
+  "admin-customers": "/admin/customers",
+  "admin-accounts": "/admin/accounts",
+  "admin-logs": "/admin/logs"
+};
+
+function tabIdFromPath(pathname) {
+  const clean = (pathname || "/").replace(/\/+$/, "") || "/";
+  for (const [id, route] of Object.entries(TAB_ROUTES)) {
+    if (route === clean) return id;
+  }
+  return null;
+}
+
+function setUrlPath(path, replace = false) {
+  if (window.location.pathname === path) return;
+  if (replace) {
+    window.history.replaceState({}, "", path);
+  } else {
+    window.history.pushState({}, "", path);
+  }
+}
+
 /* ================= AUTHENTICATION ================= */
-document.querySelectorAll(".auth-tab").forEach((btn) => {
-  btn.addEventListener("click", () => {
-    document.querySelectorAll(".auth-tab").forEach((b) => b.classList.remove("active"));
-    btn.classList.add("active");
-    const isLogin = btn.dataset.authTab === "login";
-    document.getElementById("loginForm").classList.toggle("hidden", !isLogin);
-    document.getElementById("registerForm").classList.toggle("hidden", isLogin);
-    document.getElementById("authHeading").textContent = isLogin ? "Welcome back" : "Open your banking profile";
-    document.getElementById("authSubheading").textContent = isLogin
-      ? "Sign in to access your accounts or the Admin Command Center."
-      : "Create a customer profile with salted PBKDF2 security.";
-    hideBanners();
+function setAuthMode(isLogin, pushUrl = true) {
+  document.querySelectorAll(".auth-tab").forEach((b) => {
+    b.classList.toggle("active", (b.dataset.authTab === "login") === isLogin);
   });
+  document.getElementById("loginForm").classList.toggle("hidden", !isLogin);
+  document.getElementById("registerForm").classList.toggle("hidden", isLogin);
+  document.getElementById("authHeading").textContent = isLogin ? "Welcome back" : "Open your banking profile";
+  document.getElementById("authSubheading").textContent = isLogin
+    ? "Sign in to access your accounts or the Admin Command Center."
+    : "Create a customer profile with salted PBKDF2 security.";
+  hideBanners();
+  if (pushUrl && !authToken) {
+    setUrlPath(isLogin ? "/login" : "/register");
+  }
+}
+
+document.querySelectorAll(".auth-tab").forEach((btn) => {
+  btn.addEventListener("click", () => setAuthMode(btn.dataset.authTab === "login", true));
 });
 
 document.getElementById("toggleLoginPwBtn").addEventListener("click", () => {
@@ -274,7 +309,7 @@ function buildSidebarNav() {
   });
 }
 
-function switchTab(tabId) {
+function switchTab(tabId, pushUrl = true) {
   activeTab = tabId;
   const tabs = getTabsForCurrentUser();
   const meta = tabs.find((t) => t.id === tabId) || tabs[0];
@@ -289,6 +324,10 @@ function switchTab(tabId) {
 
   buildSidebarNav();
   document.getElementById("sidebar").classList.remove("open");
+
+  if (pushUrl && TAB_ROUTES[activeTab]) {
+    setUrlPath(TAB_ROUTES[activeTab]);
+  }
 }
 
 document.querySelectorAll("[data-jump-tab]").forEach((btn) => {
@@ -302,11 +341,16 @@ document.getElementById("mobileMenuBtn").addEventListener("click", () => {
 document.getElementById("logoutBtn").addEventListener("click", logout);
 document.getElementById("globalRefreshBtn").addEventListener("click", refreshPortalData);
 
-async function renderAppState() {
+async function renderAppState(fromPopState = false) {
   checkApiHealth();
   if (!authToken || !currentUser) {
     authScreen.classList.remove("hidden");
     appShell.classList.add("hidden");
+    const isReg = window.location.pathname === "/register";
+    setAuthMode(!isReg, false);
+    if (!fromPopState && window.location.pathname !== "/register") {
+      setUrlPath("/login", true);
+    }
     return;
   }
 
@@ -321,15 +365,23 @@ async function renderAppState() {
   authScreen.classList.add("hidden");
   appShell.classList.remove("hidden");
 
-  if (!activeTab) {
+  const routeTab = tabIdFromPath(window.location.pathname);
+  const allowedTabs = getTabsForCurrentUser();
+  if (routeTab && allowedTabs.some((t) => t.id === routeTab)) {
+    activeTab = routeTab;
+  } else if (!activeTab || !allowedTabs.some((t) => t.id === activeTab)) {
     activeTab = isAdmin ? "admin-overview" : "overview";
   }
-  switchTab(activeTab);
+  switchTab(activeTab, !fromPopState);
   renderProfileTab();
   renderBeneficiaries();
   runAllCalculators();
   await refreshPortalData();
 }
+
+window.addEventListener("popstate", () => {
+  renderAppState(true);
+});
 
 async function refreshPortalData() {
   if (!currentUser) return;
