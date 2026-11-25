@@ -1,10 +1,6 @@
 // Author: Rasesh Saraf
-// Single API base URL constant: points to your deployed Render backend (or toggle to localhost:7070 via UI).
+// Single API base URL constant pointing to your deployed Render backend.
 const API_BASE_URL = "https://banking-management-system-71ep.onrender.com";
-
-function getActiveApiBase() {
-  return localStorage.getItem("bankApiOverride") || API_BASE_URL;
-}
 
 let authToken = sessionStorage.getItem("bankToken") || "";
 let currentUser = JSON.parse(sessionStorage.getItem("bankUser") || "null");
@@ -93,40 +89,21 @@ function hideBanners() {
   appAlert.classList.add("hidden");
 }
 
-function updateBackendToggleUi() {
-  const active = getActiveApiBase();
-  const isLocal = active.includes("localhost");
-  document.getElementById("toggleBackendBtn").textContent =
-    isLocal ? "Switch to Cloud (Render)" : "Switch to Localhost:7070";
-}
-
-document.getElementById("toggleBackendBtn").addEventListener("click", () => {
-  const isLocal = getActiveApiBase().includes("localhost");
-  if (isLocal) {
-    localStorage.removeItem("bankApiOverride");
-  } else {
-    localStorage.setItem("bankApiOverride", "http://localhost:7070");
-  }
-  updateBackendToggleUi();
-  checkApiHealth();
-});
-
 async function checkApiHealth() {
   const pill = document.getElementById("apiHealthPill");
   const authStat = document.getElementById("authApiStatus");
-  const base = getActiveApiBase();
   const slowTimer = setTimeout(() => {
-    authStat.textContent = `Waking up ${base.includes("localhost") ? "local" : "Render"} backend...`;
+    authStat.textContent = "Waking up server, please wait...";
     pill.innerHTML = '<span class="health-dot"></span>Waking Server...';
   }, 2000);
 
   try {
-    const res = await fetch(`${base}/health`);
+    const res = await fetch(`${API_BASE_URL}/health`);
     clearTimeout(slowTimer);
     if (res.ok) {
       pill.className = "health-pill online";
       pill.innerHTML = '<span class="health-dot"></span>API Connected';
-      authStat.textContent = `Connected: ${base.includes("localhost") ? "localhost:7070" : "Render Cloud"}`;
+      authStat.textContent = "System Status: Online";
       return;
     }
   } catch (_) {
@@ -134,7 +111,7 @@ async function checkApiHealth() {
   }
   pill.className = "health-pill offline";
   pill.innerHTML = '<span class="health-dot"></span>API Offline';
-  authStat.textContent = `Offline (${base.includes("localhost") ? "localhost:7070" : "Render"})`;
+  authStat.textContent = "System Status: Offline";
 }
 
 async function apiFetch(path, options = {}) {
@@ -145,7 +122,7 @@ async function apiFetch(path, options = {}) {
   if (authToken) {
     headers["Authorization"] = `Bearer ${authToken}`;
   }
-  const response = await fetch(`${getActiveApiBase()}${path}`, { ...options, headers });
+  const response = await fetch(`${API_BASE_URL}${path}`, { ...options, headers });
   if (options.rawResponse) {
     if (!response.ok) {
       const errData = await response.json().catch(() => ({}));
@@ -326,7 +303,6 @@ document.getElementById("logoutBtn").addEventListener("click", logout);
 document.getElementById("globalRefreshBtn").addEventListener("click", refreshPortalData);
 
 async function renderAppState() {
-  updateBackendToggleUi();
   checkApiHealth();
   if (!authToken || !currentUser) {
     authScreen.classList.remove("hidden");
