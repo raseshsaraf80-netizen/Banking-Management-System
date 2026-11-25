@@ -161,6 +161,7 @@ function setSession(token, customer) {
   sessionStorage.setItem("bankToken", token);
   sessionStorage.setItem("bankUser", JSON.stringify(customer));
   activeTab = customer.role === "ADMIN" ? "admin-overview" : "overview";
+  setUrlPath(customer.role === "ADMIN" ? "/admin" : "/overview", false);
   renderAppState();
 }
 
@@ -176,6 +177,7 @@ function logout() {
   sessionStorage.removeItem("bankUser");
   document.body.classList.remove("admin-mode");
   hideBanners();
+  setUrlPath("/login", false);
   renderAppState();
 }
 
@@ -358,6 +360,14 @@ document.getElementById("globalRefreshBtn").addEventListener("click", refreshPor
 
 async function renderAppState(fromPopState = false) {
   checkApiHealth();
+  const path = window.location.pathname;
+  if (path === "/" || path === "/login" || path === "/register") {
+    authToken = "";
+    currentUser = null;
+    sessionStorage.removeItem("bankToken");
+    sessionStorage.removeItem("bankUser");
+    document.body.classList.remove("admin-mode");
+  }
   if (!authToken || !currentUser) {
     authScreen.classList.remove("hidden");
     appShell.classList.add("hidden");
