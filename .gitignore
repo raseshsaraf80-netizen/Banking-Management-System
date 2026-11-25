@@ -1,0 +1,21 @@
+# Environment variables (never commit real API keys)
+.env
+
+# Build outputs
+target/
+
+# Local SQLite database, exported statements, and logs
+*.db
+*.db-shm
+*.db-wal
+bank.db
+statements/
+logs/
+
+# IDE and OS files
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+
