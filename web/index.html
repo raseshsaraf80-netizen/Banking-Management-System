@@ -19,14 +19,35 @@
         </div>
         <div>
           <h1>SRM Trust Bank</h1>
-          <span>CSE 213 Digital Banking Platform</span>
+          <span>Personal &amp; Corporate Digital Banking</span>
         </div>
       </div>
 
       <div class="hero-copy">
-        <div class="hero-tag">Java 17 &bull; SQLite ACID &bull; Javalin REST</div>
+        <div class="hero-tag">Java 17 &bull; ACID SQLite &bull; PBKDF2 Security</div>
         <h2>Institutional Banking, Engineered for Clarity.</h2>
-        <p>Manage savings and current accounts, execute atomic transfers with digital receipts, calculate EMI &amp; FD returns, and oversee bank liquidity from a dedicated operations console.</p>
+        <p>Manage savings and current accounts, execute atomic transfers with digital receipts, calculate EMI &amp; FD returns, and oversee bank liquidity from a unified platform.</p>
+
+        <div class="hero-feature-list">
+          <div class="hero-feature">
+            <span class="hf-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </span>
+            <div>
+              <strong>Salted PBKDF2 + HMAC Sessions</strong>
+              <span>256-bit password hashing &amp; per-route authorization</span>
+            </div>
+          </div>
+          <div class="hero-feature">
+            <span class="hf-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 3l4 4-4 4"/><path d="M3 7h18"/><path d="M7 21l-4-4 4-4"/><path d="M21 17H3"/></svg>
+            </span>
+            <div>
+              <strong>Deadlock-Free Atomic Transfers</strong>
+              <span>All-or-nothing SQLite commits with instant receipts</span>
+            </div>
+          </div>
+        </div>
 
         <div class="hero-metrics">
           <div class="hero-stat">
@@ -38,19 +59,13 @@
             <span>Current Overdraft</span>
           </div>
           <div class="hero-stat">
-            <strong>PBKDF2</strong>
-            <span>Salted Security</span>
+            <strong>CSV / Print</strong>
+            <span>Audit Statements</span>
           </div>
         </div>
       </div>
 
-      <div class="demo-box">
-        <div class="demo-box-title">One-Click Demo Access</div>
-        <div class="demo-actions">
-          <button type="button" id="fillAaravBtn" class="btn-chip">Customer: Aarav</button>
-          <button type="button" id="fillMeeraBtn" class="btn-chip">Customer: Meera</button>
-          <button type="button" id="fillAdminBtn" class="btn-chip btn-chip-amber">Admin Command Center</button>
-        </div>
+      <div class="auth-hero-foot">
         <div class="env-switch-row">
           <span id="authApiStatus" class="auth-api-status">Checking backend...</span>
           <button type="button" id="toggleBackendBtn" class="btn-link-light">Switch to Localhost:7070</button>
@@ -60,6 +75,11 @@
 
     <main class="auth-panel">
       <div class="auth-card">
+        <div class="auth-card-head">
+          <h2 id="authHeading">Welcome back</h2>
+          <p id="authSubheading">Sign in to access your accounts or the Admin Command Center.</p>
+        </div>
+
         <div class="auth-tabs" role="tablist">
           <button type="button" class="auth-tab active" data-auth-tab="login">Sign In</button>
           <button type="button" class="auth-tab" data-auth-tab="register">Open Profile</button>
@@ -69,12 +89,15 @@
 
         <form id="loginForm" class="form-stack">
           <label>Email Address
-            <input type="email" id="loginEmail" placeholder="aarav@bank.local" required />
+            <input type="email" id="loginEmail" placeholder="aarav@bank.local" autocomplete="username" required />
           </label>
           <label>Password
-            <input type="password" id="loginPassword" placeholder="Enter your password" required />
+            <div class="password-wrap">
+              <input type="password" id="loginPassword" placeholder="Enter your password" autocomplete="current-password" required />
+              <button type="button" id="toggleLoginPwBtn" class="pw-toggle" aria-label="Show password">Show</button>
+            </div>
           </label>
-          <button type="submit" class="btn btn-primary btn-block">Sign In to Portal</button>
+          <button type="submit" class="btn btn-primary btn-block btn-lg">Sign In to Portal</button>
         </form>
 
         <form id="registerForm" class="form-stack hidden">
@@ -95,8 +118,18 @@
           <label>Password
             <input type="password" id="regPassword" placeholder="Min 8 chars, upper, lower &amp; digit" required />
           </label>
-          <button type="submit" class="btn btn-accent btn-block">Create Banking Profile</button>
+          <button type="submit" class="btn btn-accent btn-block btn-lg">Create Banking Profile</button>
         </form>
+
+        <div class="auth-demo-footer">
+          <div class="demo-footer-label">Quick Demo Access</div>
+          <div class="demo-actions">
+            <button type="button" id="fillAaravBtn" class="btn-demo">Customer: Aarav</button>
+            <button type="button" id="fillMeeraBtn" class="btn-demo">Customer: Meera</button>
+            <button type="button" id="fillAdminBtn" class="btn-demo btn-demo-admin">Admin Portal</button>
+          </div>
+          <div class="auth-security-note">Protected by PBKDF2WithHmacSHA256 &amp; signed session tokens.</div>
+        </div>
       </div>
     </main>
   </div>

@@ -195,8 +195,20 @@ document.querySelectorAll(".auth-tab").forEach((btn) => {
     const isLogin = btn.dataset.authTab === "login";
     document.getElementById("loginForm").classList.toggle("hidden", !isLogin);
     document.getElementById("registerForm").classList.toggle("hidden", isLogin);
+    document.getElementById("authHeading").textContent = isLogin ? "Welcome back" : "Open your banking profile";
+    document.getElementById("authSubheading").textContent = isLogin
+      ? "Sign in to access your accounts or the Admin Command Center."
+      : "Create a customer profile with salted PBKDF2 security.";
     hideBanners();
   });
+});
+
+document.getElementById("toggleLoginPwBtn").addEventListener("click", () => {
+  const pwInput = document.getElementById("loginPassword");
+  const btn = document.getElementById("toggleLoginPwBtn");
+  const isHidden = pwInput.type === "password";
+  pwInput.type = isHidden ? "text" : "password";
+  btn.textContent = isHidden ? "Hide" : "Show";
 });
 
 document.getElementById("fillAaravBtn").addEventListener("click", () => {
