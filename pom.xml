@@ -10,17 +10,15 @@
     <packaging>jar</packaging>
 
     <name>Banking Management System</name>
-    <description>Advanced Java (CSE 213) Banking Management System with JavaFX, SQLite JDBC, Javalin REST API, and AI Chatbot</description>
+    <description>Advanced Java (CSE 213) Banking Management System with JavaFX, SQLite JDBC, built-in JDK HttpServer, and AI Chatbot</description>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>17</maven.compiler.release>
         <javafx.version>21.0.5</javafx.version>
-        <javalin.version>6.4.0</javalin.version>
         <jackson.version>2.18.2</jackson.version>
         <sqlite.version>3.47.1.0</sqlite.version>
         <junit.version>5.11.4</junit.version>
-        <slf4j.version>2.0.16</slf4j.version>
     </properties>
 
     <dependencies>
@@ -43,13 +41,6 @@
             <version>${javafx.version}</version>
         </dependency>
 
-        <!-- Lightweight REST API server -->
-        <dependency>
-            <groupId>io.javalin</groupId>
-            <artifactId>javalin</artifactId>
-            <version>${javalin.version}</version>
-        </dependency>
-
         <!-- JSON serialization for REST API and ChatbotService -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
@@ -60,13 +51,6 @@
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
             <version>${jackson.version}</version>
-        </dependency>
-
-        <!-- Minimal SLF4J binding required by Javalin -->
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <version>${slf4j.version}</version>
         </dependency>
 
         <!-- JUnit 5 testing framework -->
@@ -102,21 +86,7 @@
                 </configuration>
             </plugin>
 
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.5.2</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>integration-test</goal>
-                            <goal>verify</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <!-- JavaFX Maven Plugin: run desktop UI via mvn javafx:run -->
+            <!-- Run JavaFX desktop UI: mvn javafx:run -->
             <plugin>
                 <groupId>org.openjfx</groupId>
                 <artifactId>javafx-maven-plugin</artifactId>
@@ -126,39 +96,14 @@
                 </configuration>
             </plugin>
 
-            <!-- Build an executable fat JAR for the REST API server (used in Docker) -->
+            <!-- Run local Web Portal & API server on port 8080: mvn exec:java -->
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <version>3.6.0</version>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                        <configuration>
-                            <createDependencyReducedPom>false</createDependencyReducedPom>
-                            <shadedArtifactAttached>true</shadedArtifactAttached>
-                            <shadedClassifierName>api</shadedClassifierName>
-                            <transformers>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>com.bank.api.ApiServer</mainClass>
-                                </transformer>
-                            </transformers>
-                            <filters>
-                                <filter>
-                                    <artifact>*:*</artifact>
-                                    <excludes>
-                                        <exclude>META-INF/*.SF</exclude>
-                                        <exclude>META-INF/*.DSA</exclude>
-                                        <exclude>META-INF/*.RSA</exclude>
-                                    </excludes>
-                                </filter>
-                            </filters>
-                        </configuration>
-                    </execution>
-                </executions>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.5.0</version>
+                <configuration>
+                    <mainClass>com.bank.api.ApiServer</mainClass>
+                </configuration>
             </plugin>
         </plugins>
     </build>

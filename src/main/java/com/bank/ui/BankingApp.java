@@ -260,7 +260,7 @@ public class BankingApp extends Application {
         aboutItem.setOnAction(e -> UiHelpers.showInfo("About",
                 "Meridian Trust Bank - CSE 213 Advanced Java Project\n"
                         + "Team: Rasesh Saraf, Shaurya Kumar, Sahil Raj\n"
-                        + "JavaFX 21 + Plain JDBC SQLite + Javalin 6 + KoshAI"));
+                        + "JavaFX 21 + Plain JDBC SQLite + Built-in JDK HttpServer + KoshAI"));
         helpMenu.getItems().add(aboutItem);
 
         return new MenuBar(fileMenu, helpMenu);

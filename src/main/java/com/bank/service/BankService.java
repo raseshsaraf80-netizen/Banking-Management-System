@@ -38,7 +38,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 /**
- * Core banking business logic shared by the JavaFX desktop client and the Javalin REST API.
+ * Core banking business logic shared by the JavaFX desktop client and the REST API.
  */
 public class BankService {
 

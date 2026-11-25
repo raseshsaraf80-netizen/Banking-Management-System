@@ -1,5 +1,5 @@
 // Author: Rasesh Saraf
-// Concept: Integration tests for Javalin REST API using JDK HttpClient
+// Concept: Integration tests for built-in JDK HttpServer REST API using JDK HttpClient
 package com.bank;
 
 import com.bank.ai.ChatbotService;
@@ -15,7 +15,6 @@ import com.bank.util.BankLogger;
 import com.bank.util.DatabaseManager;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.javalin.Javalin;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,7 +36,7 @@ class ApiServerTest {
     @TempDir
     Path tempDir;
 
-    private Javalin app;
+    private ApiServer server;
     private String baseUrl;
     private final HttpClient client = HttpClient.newHttpClient();
     private final ObjectMapper mapper = new ObjectMapper();
@@ -58,15 +57,15 @@ class ApiServerTest {
         InterestService interestService = new InterestService(bankService);
         TokenUtil tokenUtil = new TokenUtil("test-secret");
 
-        ApiServer server = new ApiServer(authService, bankService, chatbotService, interestService, tokenUtil);
-        app = server.createApp("*").start(0);
-        baseUrl = "http://localhost:" + app.port();
+        server = new ApiServer(authService, bankService, chatbotService, interestService, tokenUtil);
+        int port = server.start(0);
+        baseUrl = "http://localhost:" + port;
     }
 
     @AfterEach
     void tearDown() {
-        if (app != null) {
-            app.stop();
+        if (server != null) {
+            server.stop();
         }
     }
 

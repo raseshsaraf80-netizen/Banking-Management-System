@@ -1,6 +1,6 @@
 # Meridian Trust Bank — Banking Management System (CSE 213)
 
-A complete **Advanced Java Programming (CSE 213)** banking management system built with **Java 17**, **plain JDBC + SQLite**, **JavaFX 21**, **Javalin 6 REST API**, **JDK `HttpClient` AI Chatbot**, and a **static web frontend**.
+A **Core Java 17** banking management system built with **plain JDBC + SQLite**, **JavaFX 21**, **built-in JDK `HttpServer`**, **JDK `HttpClient` AI Chatbot**, and a **vanilla HTML/CSS/JS web portal**—with zero heavy frameworks, no Docker, and no cloud setup required.
 
 - **Course:** Advanced Java Programming (CSE 213), SRM University-AP, 2026–27
 - **Team:** Rasesh Saraf (Coordinator), Shaurya Kumar, Sahil Raj
@@ -36,20 +36,11 @@ mvn clean verify
 mvn javafx:run
 ```
 
-### 3. Run the REST API Server (Port 7070)
+### 3. Run the Local Web Portal & REST API (`http://localhost:8080`)
 ```bash
-mvn package
-java -jar target/banking-system-1.0.0-api.jar
+mvn exec:java
 ```
-(Or run `com.bank.api.ApiServer` directly from your IDE.)
-
-### 4. Run the Static Web Frontend
-Serve `web/` with any static file server (e.g., VS Code Live Server or Python):
-```bash
-cd web
-python -m http.server 5500
-```
-Then open `http://localhost:5500`. Make sure `API_BASE_URL` in `web/app.js` matches your running API URL (`http://localhost:7070` locally).
+Then open **`http://localhost:8080`** in your browser. The built-in Java `HttpServer` serves both the web frontend (`web/`) and the `/api/*` endpoints on the same port—no separate web server or Docker needed.
 
 ---
 

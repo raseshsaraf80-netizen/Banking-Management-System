@@ -1,6 +1,6 @@
 // Author: Rasesh Saraf
-// Single API base URL constant pointing to your deployed Render backend.
-const API_BASE_URL = "https://banking-management-system-71ep.onrender.com";
+// Local API base URL: uses same-origin when served by ApiServer on port 8080.
+const API_BASE_URL = window.location.port === "8080" ? "" : "http://localhost:8080";
 
 let authToken = sessionStorage.getItem("bankToken") || "";
 let currentUser = JSON.parse(sessionStorage.getItem("bankUser") || "null");

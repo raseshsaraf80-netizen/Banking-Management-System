@@ -1,11 +1,13 @@
 # Faculty Viva & Explanation Guide — Meridian Trust Bank (CSE 213)
 
 ## 1. How to Explain Our Tech Stack in 30 Seconds
-> *"We built a pure Core Java 17 Banking Management System without heavy black-box frameworks like Spring Boot or Hibernate, so every CSE 213 concept—OOP, custom exceptions, plain JDBC, collections, generics, multithreading, File I/O, and JavaFX—is visible in our own code. Both the JavaFX desktop app and a lightweight Javalin 6 web API share the exact same Java service layer and SQLite database."*
+> *"We built a pure Core Java 17 Banking Management System without heavy frameworks like Spring Boot, Hibernate, or even Javalin. Every CSE 213 concept—OOP, custom exceptions, plain JDBC, collections, generics, multithreading, File I/O, and JavaFX—is written directly by us. Both the JavaFX 21 desktop app and the web portal (served on `http://localhost:8080` by Java's built-in `HttpServer`) share the exact same Java service layer and SQLite database."*
 
-- **Why SQLite + Plain JDBC?** Zero database server setup; `DatabaseManager` creates `bank.db` automatically using `PreparedStatement`.
-- **Why Javalin 6?** Only ~50 lines in `ApiServer.java` to expose REST endpoints to the plain HTML/CSS/JS website—much simpler than Spring Boot.
-- **Why Docker + Render + Vercel?** Vercel only hosts static HTML/CSS/JS (`web/`). Docker packages our Java 17 API (`ApiServer`) so Render can run it in the cloud.
+- **Java 17 + Maven:** Single-module Java project with minimal dependencies (`sqlite-jdbc`, `javafx`, `jackson`, `junit-jupiter`).
+- **SQLite + Plain JDBC:** Zero database server setup; `DatabaseManager` creates `bank.db` automatically using `PreparedStatement`.
+- **JavaFX 21:** Native desktop banking app (`mvn javafx:run`).
+- **Built-in JDK `HttpServer` + HTML/CSS/JS:** `com.sun.net.httpserver.HttpServer` (part of standard Java, zero extra web framework) serves both `web/` and `/api/*` on `http://localhost:8080` (`mvn exec:java`).
+- **JDK `HttpClient` Chatbot:** Calls Gemini/Anthropic if an API key is set, or falls back to an offline banking FAQ engine.
 
 ---
 
@@ -41,3 +43,4 @@
    `StatementService` exports TXT/CSV statements using `FileOutputStream` + `BufferedWriter` and reads CSV back with `FileInputStream` + `BufferedReader` inside try-with-resources; `BankLogger` appends to `logs/bank.log`.
 10. **How are passwords and API keys kept secure?**
     Passwords are hashed with salted `PBKDF2WithHmacSHA256` (`PasswordUtil`) and never returned in JSON (`@JsonIgnore` + DTOs). AI API keys live only in server environment variables, never in frontend JS or Git.
+

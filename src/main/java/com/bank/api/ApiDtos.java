@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * Request and response DTOs for the Javalin REST API.
+ * Request and response DTOs for the REST API.
  */
 public final class ApiDtos {
 
