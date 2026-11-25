@@ -89,7 +89,21 @@ function hideBanners() {
   appAlert.classList.add("hidden");
 }
 
-async function checkApiHealth() {
+function setApiOnline(online, customText) {
+  const pill = document.getElementById("apiHealthPill");
+  const authStat = document.getElementById("authApiStatus");
+  if (online) {
+    pill.className = "health-pill online";
+    pill.innerHTML = '<span class="health-dot"></span>API Connected';
+    authStat.textContent = customText || "System Status: Online";
+  } else {
+    pill.className = "health-pill offline";
+    pill.innerHTML = '<span class="health-dot"></span>API Offline';
+    authStat.textContent = customText || "System Status: Offline";
+  }
+}
+
+async function checkApiHealth(retriesLeft = 1) {
   const pill = document.getElementById("apiHealthPill");
   const authStat = document.getElementById("authApiStatus");
   const slowTimer = setTimeout(() => {
@@ -98,20 +112,20 @@ async function checkApiHealth() {
   }, 2000);
 
   try {
-    const res = await fetch(`${API_BASE_URL}/health`);
+    const res = await fetch(`${API_BASE_URL}/health`, { cache: "no-store" });
     clearTimeout(slowTimer);
     if (res.ok) {
-      pill.className = "health-pill online";
-      pill.innerHTML = '<span class="health-dot"></span>API Connected';
-      authStat.textContent = "System Status: Online";
+      setApiOnline(true);
       return;
     }
   } catch (_) {
     clearTimeout(slowTimer);
   }
-  pill.className = "health-pill offline";
-  pill.innerHTML = '<span class="health-dot"></span>API Offline';
-  authStat.textContent = "System Status: Offline";
+  if (retriesLeft > 0) {
+    setTimeout(() => checkApiHealth(retriesLeft - 1), 3000);
+    return;
+  }
+  setApiOnline(false);
 }
 
 async function apiFetch(path, options = {}) {
@@ -123,6 +137,7 @@ async function apiFetch(path, options = {}) {
     headers["Authorization"] = `Bearer ${authToken}`;
   }
   const response = await fetch(`${API_BASE_URL}${path}`, { ...options, headers });
+  setApiOnline(true);
   if (options.rawResponse) {
     if (!response.ok) {
       const errData = await response.json().catch(() => ({}));
