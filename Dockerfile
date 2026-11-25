@@ -24,5 +24,5 @@ COPY --from=build /app/target/banking-system-1.0.0-api.jar /app/app.jar
 
 EXPOSE 7070
 
-CMD ["java", "-jar", "/app/app.jar"]
+CMD ["java", "-Djava.net.preferIPv4Stack=true", "-jar", "/app/app.jar"]
 

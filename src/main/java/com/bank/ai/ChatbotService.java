@@ -92,6 +92,16 @@ public class ChatbotService {
         return (env == null || env.isBlank()) ? DEFAULT_GEMINI_MODEL : env.trim();
     }
 
+    public String getMode() {
+        if (apiKey != null && !apiKey.isBlank()) {
+            return "anthropic";
+        }
+        if (geminiApiKey != null && !geminiApiKey.isBlank()) {
+            return "gemini";
+        }
+        return "offline";
+    }
+
     /**
      * Sends the user message and recent chat history to Anthropic (or Gemini if configured)
      * and returns a safe reply. Never throws on network/API errors.
@@ -204,6 +214,7 @@ public class ChatbotService {
             String bodyJson = mapper.writeValueAsString(payload);
             String encodedKey = URLEncoder.encode(geminiApiKey, StandardCharsets.UTF_8);
 
+            String lastError = "no-response";
             for (String candidateModel : candidatesToTry) {
                 String endpoint = "https://generativelanguage.googleapis.com/v1beta/models/"
                         + candidateModel + ":generateContent?key=" + encodedKey;
@@ -217,12 +228,20 @@ public class ChatbotService {
 
                 HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
                 if (response.statusCode() == 404) {
+                    lastError = candidateModel + " HTTP 404";
                     System.err.println("Gemini model " + candidateModel + " returned 404, trying fallback...");
                     continue;
                 }
                 if (response.statusCode() < 200 || response.statusCode() >= 300) {
-                    System.err.println("Gemini API (" + candidateModel + ") returned HTTP " + response.statusCode());
-                    return buildOfflineFallback(userMessage);
+                    String apiMsg = "";
+                    try {
+                        apiMsg = mapper.readTree(response.body()).path("error").path("message").asText("");
+                    } catch (Exception ignored) {
+                    }
+                    lastError = candidateModel + " HTTP " + response.statusCode()
+                            + (apiMsg.isEmpty() ? "" : " (" + apiMsg + ")");
+                    System.err.println("Gemini API error: " + lastError);
+                    return buildOfflineFallback(userMessage) + " [Gemini: HTTP " + response.statusCode() + "]";
                 }
 
                 JsonNode root = mapper.readTree(response.body());
@@ -237,7 +256,7 @@ public class ChatbotService {
                     }
                 }
             }
-            return buildOfflineFallback(userMessage);
+            return buildOfflineFallback(userMessage) + " [Gemini: " + lastError + "]";
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
             return "The assistant request was interrupted. Please try again.";

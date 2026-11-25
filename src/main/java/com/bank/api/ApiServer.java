@@ -133,7 +133,11 @@ public class ApiServer {
                 ctx.status(500).json(Map.of("error", "Internal server error: " + e.getMessage())));
 
         // Public health check
-        app.get("/health", ctx -> ctx.json(Map.of("status", "ok", "bank", "SRM Trust Bank")));
+        app.get("/health", ctx -> ctx.json(Map.of(
+                "status", "ok",
+                "bank", "SRM Trust Bank",
+                "aiMode", chatbotService.getMode()
+        )));
 
         // Public authentication endpoints
         app.post("/api/auth/register", this::handleRegister);
