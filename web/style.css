@@ -1236,9 +1236,12 @@ th {
   color: #fff;
   border: none;
   border-radius: 999px;
-  padding: 12px 20px;
+  padding: 12px 18px;
   font-weight: 700;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.28);
 }
 

@@ -784,30 +784,36 @@
   <!-- ================= TOAST CONTAINER ================= -->
   <div id="toastStack" class="toast-stack no-print" aria-live="polite"></div>
 
-  <!-- ================= FLOATING AI BANKING ASSISTANT ================= -->
+  <!-- ================= FLOATING AI BANKING ASSISTANT (KoshAI) ================= -->
   <div class="chat-widget no-print">
     <div id="chatPanel" class="chat-panel hidden">
       <div class="chat-header">
         <div>
-          <strong>Banking Assistant</strong>
-          <div class="chat-sub">FAQs &amp; Feature Help</div>
+          <strong>KoshAI</strong>
+          <div class="chat-sub">AI Banking Assistant</div>
         </div>
-        <button type="button" id="chatCloseBtn" class="chat-close" aria-label="Close chat">&times;</button>
+        <div class="inline-controls">
+          <button type="button" id="chatClearBtn" class="btn-xs btn-xs-light" title="Clear chat">Clear</button>
+          <button type="button" id="chatCloseBtn" class="chat-close" aria-label="Close chat">&times;</button>
+        </div>
       </div>
       <div id="chatMessages" class="chat-messages">
-        <div class="msg bot">Hello! Ask me about Savings minimum balance, interest rates, Current overdraft, or statement exports.</div>
+        <div class="msg bot">Hi, I'm KoshAI! Ask me about Savings vs Current accounts, transfers, EMI calculators, or statement exports.</div>
       </div>
       <div class="chat-prompts">
-        <button type="button" class="chat-chip" data-q="What is the minimum balance for savings?">Min balance?</button>
-        <button type="button" class="chat-chip" data-q="What is the overdraft limit for current accounts?">Overdraft?</button>
-        <button type="button" class="chat-chip" data-q="How do I export a statement?">Export CSV?</button>
+        <button type="button" class="chat-chip" data-q="Compare Savings and Current accounts">Savings vs Current</button>
+        <button type="button" class="chat-chip" data-q="How do transfers work?">Atomic transfers</button>
+        <button type="button" class="chat-chip" data-q="How do I export a statement?">Export CSV</button>
       </div>
       <form id="chatForm" class="chat-input-row">
-        <input type="text" id="chatInput" placeholder="Ask a banking question..." required />
-        <button type="submit" class="btn btn-primary">Send</button>
+        <input type="text" id="chatInput" placeholder="Ask KoshAI..." required />
+        <button type="submit" id="chatSendBtn" class="btn btn-primary">Send</button>
       </form>
     </div>
-    <button type="button" id="chatToggleBtn" class="chat-toggle">Bank Help</button>
+    <button type="button" id="chatToggleBtn" class="chat-toggle">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z"/></svg>
+      <span>Ask KoshAI</span>
+    </button>
   </div>
 
   <script src="/app.js"></script>

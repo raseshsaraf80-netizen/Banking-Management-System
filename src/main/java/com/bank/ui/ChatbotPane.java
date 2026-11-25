@@ -37,15 +37,15 @@ public class ChatbotPane extends VBox {
 
     private void buildUi() {
         VBox card = UiHelpers.createCard(16);
-        Label header = new Label("SRM Trust Bank AI Assistant");
+        Label header = new Label("KoshAI — Smart Banking Assistant");
         header.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
-        Label note = new Label("Ask about account rules, minimum balance, interest rates, or statement exports.");
+        Label note = new Label("Ask KoshAI about account rules, minimum balance, interest rates, or statement exports.");
         note.setStyle("-fx-font-size: 12px; -fx-text-fill: #64748b;");
 
         chatArea.setEditable(false);
         chatArea.setWrapText(true);
         chatArea.setPrefHeight(320);
-        chatArea.setText("Assistant: Hello! Ask me anything about SRM Trust Bank features or FAQs.\n\n");
+        chatArea.setText("KoshAI: Hello! Ask me anything about SRM Trust Bank features or FAQs.\n\n");
 
         inputField.setPromptText("Ask a banking FAQ...");
         HBox.setHgrow(inputField, Priority.ALWAYS);
@@ -57,7 +57,7 @@ public class ChatbotPane extends VBox {
         Button clearBtn = new Button("Clear");
         clearBtn.setOnAction(e -> {
             history.clear();
-            chatArea.setText("Assistant: Conversation cleared. How can I help?\n\n");
+            chatArea.setText("KoshAI: Conversation cleared. How can I help?\n\n");
         });
 
         HBox inputRow = new HBox(10, inputField, sendBtn, clearBtn);
@@ -82,7 +82,7 @@ public class ChatbotPane extends VBox {
             Platform.runLater(() -> {
                 history.add(new ChatTurn("user", trimmed));
                 history.add(new ChatTurn("assistant", reply));
-                chatArea.appendText("Assistant: " + reply + "\n\n");
+                chatArea.appendText("KoshAI: " + reply + "\n\n");
                 sendBtn.setDisable(false);
             });
         }, "javafx-chatbot-worker");

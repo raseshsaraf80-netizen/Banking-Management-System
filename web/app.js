@@ -1481,12 +1481,16 @@ document.getElementById("changePasswordForm").addEventListener("submit", async (
   }
 });
 
-/* ================= FLOATING CHATBOT WIDGET ================= */
+/* ================= FLOATING CHATBOT WIDGET (KoshAI) ================= */
 const chatPanel = document.getElementById("chatPanel");
 const chatMessages = document.getElementById("chatMessages");
 
 document.getElementById("chatToggleBtn").addEventListener("click", () => chatPanel.classList.toggle("hidden"));
 document.getElementById("chatCloseBtn").addEventListener("click", () => chatPanel.classList.add("hidden"));
+document.getElementById("chatClearBtn").addEventListener("click", () => {
+  chatHistory.length = 0;
+  chatMessages.innerHTML = '<div class="msg bot">Hi, I\'m KoshAI! Ask me about Savings vs Current accounts, transfers, EMI calculators, or statement exports.</div>';
+});
 
 function appendChatBubble(text, who) {
   const div = document.createElement("div");
@@ -1494,20 +1498,27 @@ function appendChatBubble(text, who) {
   div.textContent = text;
   chatMessages.appendChild(div);
   chatMessages.scrollTop = chatMessages.scrollHeight;
+  return div;
 }
 
 function localPreLoginFaq(q) {
   const lower = q.toLowerCase();
-  if (lower.includes("minimum") || lower.includes("savings")) {
-    return "Savings accounts require a minimum balance of ₹1,000, allow 5 withdrawals/month, and earn 3.5% p.a. Sign in to use the full server assistant.";
+  if (lower.includes("compare") || (lower.includes("savings") && lower.includes("current"))) {
+    return "KoshAI: Savings accounts require ₹1,000 minimum balance, allow 5 withdrawals/month, and earn 3.5% p.a. Current accounts have ₹10,000 overdraft and 0% interest. Sign in for full AI chat.";
+  }
+  if (lower.includes("minimum") || lower.includes("savings") || lower.includes("interest")) {
+    return "KoshAI: Savings accounts require a ₹1,000 minimum balance, allow 5 withdrawals/month, and earn 3.5% p.a. Sign in to chat with live AI.";
   }
   if (lower.includes("overdraft") || lower.includes("current")) {
-    return "Current accounts include a ₹10,000 overdraft limit and earn 0% interest. Sign in for full assistant help.";
+    return "KoshAI: Current accounts include a ₹10,000 overdraft limit and earn 0% interest. Sign in for live AI chat.";
+  }
+  if (lower.includes("transfer")) {
+    return "KoshAI: Transfers are atomic (all-or-nothing in SQLite). Sign in and open Payments & Transfers to send funds.";
   }
   if (lower.includes("export") || lower.includes("csv")) {
-    return "Sign in, open Statements & Export, and click Download CSV or Print / PDF.";
+    return "KoshAI: Sign in, open Statements & Export, and click Download CSV or Print / PDF.";
   }
-  return "Please sign in to ask the live banking assistant (or click a demo login button to explore).";
+  return "Hi! I'm KoshAI. Please sign in to use the live AI assistant (or click a demo login button to explore).";
 }
 
 async function sendChatPrompt(msg) {
@@ -1516,16 +1527,23 @@ async function sendChatPrompt(msg) {
     appendChatBubble(localPreLoginFaq(msg), "bot");
     return;
   }
+  const sendBtn = document.getElementById("chatSendBtn");
+  sendBtn.disabled = true;
+  const typingBubble = appendChatBubble("KoshAI is thinking...", "bot");
   try {
     const data = await apiFetch("/api/chat", {
       method: "POST",
       body: JSON.stringify({ message: msg, history: chatHistory.slice(-6) })
     });
+    typingBubble.remove();
     chatHistory.push({ role: "user", content: msg });
     chatHistory.push({ role: "assistant", content: data.reply });
     appendChatBubble(data.reply, "bot");
   } catch (err) {
+    typingBubble.remove();
     appendChatBubble(`Error: ${err.message}`, "bot");
+  } finally {
+    sendBtn.disabled = false;
   }
 }
 
