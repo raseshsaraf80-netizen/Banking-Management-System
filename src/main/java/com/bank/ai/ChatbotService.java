@@ -9,9 +9,11 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
 
@@ -67,10 +69,10 @@ public class ChatbotService {
 
     public ChatbotService(String apiKey, String model, String apiUrl,
                           String geminiApiKey, String geminiModel) {
-        this.apiKey = apiKey;
+        this.apiKey = apiKey == null ? null : apiKey.trim();
         this.model = (model == null || model.isBlank()) ? DEFAULT_MODEL : model.trim();
         this.apiUrl = (apiUrl == null || apiUrl.isBlank()) ? DEFAULT_API_URL : apiUrl;
-        this.geminiApiKey = geminiApiKey;
+        this.geminiApiKey = geminiApiKey == null ? null : geminiApiKey.trim();
         this.geminiModel = (geminiModel == null || geminiModel.isBlank())
                 ? DEFAULT_GEMINI_MODEL
                 : geminiModel.trim();
@@ -194,34 +196,48 @@ public class ChatbotService {
             ObjectNode genCfg = payload.putObject("generationConfig");
             genCfg.put("maxOutputTokens", MAX_TOKENS);
 
-            String endpoint = "https://generativelanguage.googleapis.com/v1beta/models/"
-                    + geminiModel + ":generateContent?key=" + geminiApiKey;
+            String[] candidatesToTry = {
+                    geminiModel,
+                    "gemini-2.0-flash",
+                    "gemini-flash-latest"
+            };
+            String bodyJson = mapper.writeValueAsString(payload);
+            String encodedKey = URLEncoder.encode(geminiApiKey, StandardCharsets.UTF_8);
 
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(endpoint))
-                    .timeout(TIMEOUT)
-                    .header("content-type", "application/json")
-                    .POST(HttpRequest.BodyPublishers.ofString(mapper.writeValueAsString(payload)))
-                    .build();
+            for (String candidateModel : candidatesToTry) {
+                String endpoint = "https://generativelanguage.googleapis.com/v1beta/models/"
+                        + candidateModel + ":generateContent?key=" + encodedKey;
 
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() < 200 || response.statusCode() >= 300) {
-                System.err.println("Gemini API returned HTTP status " + response.statusCode());
-                return "KoshAI is temporarily unavailable (HTTP " + response.statusCode() + ").";
-            }
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(URI.create(endpoint))
+                        .timeout(TIMEOUT)
+                        .header("content-type", "application/json")
+                        .POST(HttpRequest.BodyPublishers.ofString(bodyJson))
+                        .build();
 
-            JsonNode root = mapper.readTree(response.body());
-            JsonNode candidates = root.path("candidates");
-            if (candidates.isArray() && !candidates.isEmpty()) {
-                JsonNode parts = candidates.get(0).path("content").path("parts");
-                if (parts.isArray() && !parts.isEmpty()) {
-                    String text = parts.get(0).path("text").asText("").trim();
-                    if (!text.isEmpty()) {
-                        return text;
+                HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+                if (response.statusCode() == 404) {
+                    System.err.println("Gemini model " + candidateModel + " returned 404, trying fallback...");
+                    continue;
+                }
+                if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                    System.err.println("Gemini API (" + candidateModel + ") returned HTTP " + response.statusCode());
+                    return buildOfflineFallback(userMessage);
+                }
+
+                JsonNode root = mapper.readTree(response.body());
+                JsonNode candidates = root.path("candidates");
+                if (candidates.isArray() && !candidates.isEmpty()) {
+                    JsonNode parts = candidates.get(0).path("content").path("parts");
+                    if (parts.isArray() && !parts.isEmpty()) {
+                        String text = parts.get(0).path("text").asText("").trim();
+                        if (!text.isEmpty()) {
+                            return text;
+                        }
                     }
                 }
             }
-            return "KoshAI received an empty response. Please rephrase your question.";
+            return buildOfflineFallback(userMessage);
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
             return "The assistant request was interrupted. Please try again.";
