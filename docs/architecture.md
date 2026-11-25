@@ -1,8 +1,8 @@
-# Architecture & Design Diagrams — SRM Trust Bank
+# Architecture & Design Diagrams — Meridian Trust Bank
 
 ## 1. One-Page Architecture Overview
 
-SRM Trust Bank follows a clean, layered Java architecture so that **both the JavaFX 21 desktop client and the Javalin 6 REST API share the exact same business logic and SQLite persistence layer**:
+Meridian Trust Bank follows a clean, layered Java architecture so that **both the JavaFX 21 desktop client and the Javalin 6 REST API share the exact same business logic and SQLite persistence layer**:
 
 1. **Presentation Layer (`com.bank.ui`, `web/`, `com.bank.api`)**
    - **Desktop UI (`com.bank.ui`):** JavaFX 21 application (`BankingApp`) with `LoginView`, `DashboardPane`, `TransactionPane`, `StatementPane`, `AdminPane`, and `ChatbotPane`. Uses delegation listeners, `KeyPressedAdapter`, `MenuBar`/`ToolBar`, and `Platform.runLater` for async chatbot calls.

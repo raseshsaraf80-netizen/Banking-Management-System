@@ -45,7 +45,7 @@ public class ChatbotPane extends VBox {
         chatArea.setEditable(false);
         chatArea.setWrapText(true);
         chatArea.setPrefHeight(320);
-        chatArea.setText("KoshAI: Hello! Ask me anything about SRM Trust Bank features or FAQs.\n\n");
+        chatArea.setText("KoshAI: Hello! Ask me anything about Meridian Trust Bank features or FAQs.\n\n");
 
         inputField.setPromptText("Ask a banking FAQ...");
         HBox.setHgrow(inputField, Priority.ALWAYS);

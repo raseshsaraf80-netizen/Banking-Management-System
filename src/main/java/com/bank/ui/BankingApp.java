@@ -42,7 +42,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Main JavaFX desktop application for SRM Trust Bank with distinct Customer & Admin portals.
+ * Main JavaFX desktop application for Meridian Trust Bank with distinct Customer & Admin portals.
  */
 public class BankingApp extends Application {
 
@@ -85,7 +85,7 @@ public class BankingApp extends Application {
     @Override
     public void start(Stage stage) {
         this.primaryStage = stage;
-        stage.setTitle("SRM Trust Bank - Advanced Java (CSE 213)");
+        stage.setTitle("Meridian Trust Bank - Advanced Java (CSE 213)");
         showLoginScreen();
         stage.show();
     }
@@ -157,7 +157,7 @@ public class BankingApp extends Application {
         String accent = isAdmin ? "#f59e0b" : "#14b8a6";
         sidebar.setStyle("-fx-background-color: " + bg + ";");
 
-        Label brand = new Label("SRM Trust Bank");
+        Label brand = new Label("Meridian Trust Bank");
         brand.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #ffffff;");
         Label badge = new Label(isAdmin ? "ADMIN COMMAND" : "CUSTOMER PORTAL");
         badge.setStyle("-fx-font-size: 10px; -fx-font-weight: bold; -fx-text-fill: " + accent
@@ -255,10 +255,10 @@ public class BankingApp extends Application {
                 exportTxtItem, exportCsvItem, new SeparatorMenuItem(), logoutItem, exitItem);
 
         Menu helpMenu = new Menu("Help");
-        MenuItem aboutItem = new MenuItem("About SRM Trust Bank");
+        MenuItem aboutItem = new MenuItem("About Meridian Trust Bank");
         aboutItem.setGraphic(UiHelpers.createBadgeIcon(Color.web("#475569")));
         aboutItem.setOnAction(e -> UiHelpers.showInfo("About",
-                "SRM Trust Bank - CSE 213 Advanced Java Project\n"
+                "Meridian Trust Bank - CSE 213 Advanced Java Project\n"
                         + "Team: Rasesh Saraf, Shaurya Kumar, Sahil Raj\n"
                         + "JavaFX 21 + Plain JDBC SQLite + Javalin 6 + KoshAI"));
         helpMenu.getItems().add(aboutItem);

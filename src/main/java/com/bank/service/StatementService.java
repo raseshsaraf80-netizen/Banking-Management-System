@@ -44,7 +44,7 @@ public class StatementService {
                      new OutputStreamWriter(fos, StandardCharsets.UTF_8))) {
             writer.write("============================================================");
             writer.newLine();
-            writer.write("SRM TRUST BANK - ACCOUNT STATEMENT (" + accountNumber + ")");
+            writer.write("MERIDIAN TRUST BANK - ACCOUNT STATEMENT (" + accountNumber + ")");
             writer.newLine();
             writer.write("Generated on: " + LocalDateTime.now());
             writer.newLine();

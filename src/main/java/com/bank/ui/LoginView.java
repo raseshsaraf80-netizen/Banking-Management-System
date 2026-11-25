@@ -111,7 +111,7 @@ public class LoginView extends HBox {
         hero.setPadding(new Insets(44));
         hero.setStyle("-fx-background-color: linear-gradient(to bottom right, #08182e, #0b2545, #102f57);");
 
-        Label brand = new Label("SRM Trust Bank");
+        Label brand = new Label("Meridian Trust Bank");
         brand.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #ffffff;");
         Label brandSub = new Label("Personal & Corporate Banking • CSE 213");
         brandSub.setStyle("-fx-font-size: 12px; -fx-text-fill: #94a3b8;");

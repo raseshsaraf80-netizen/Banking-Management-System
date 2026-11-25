@@ -135,7 +135,7 @@ public class ApiServer {
         // Public health check
         app.get("/health", ctx -> ctx.json(Map.of(
                 "status", "ok",
-                "bank", "SRM Trust Bank",
+                "bank", "Meridian Trust Bank",
                 "aiMode", chatbotService.getMode()
         )));
 

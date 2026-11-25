@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 public abstract class BankEntity {
 
     // Constant shared across all banking entities
-    public static final String BANK_NAME = "SRM Trust Bank";
+    public static final String BANK_NAME = "Meridian Trust Bank";
 
     protected LocalDateTime createdAt;
 

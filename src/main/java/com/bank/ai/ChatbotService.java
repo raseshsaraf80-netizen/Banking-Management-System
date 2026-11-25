@@ -18,7 +18,7 @@ import java.time.Duration;
 import java.util.List;
 
 /**
- * KoshAI — Server-side AI banking assistant for SRM Trust Bank.
+ * KoshAI — Server-side AI banking assistant for Meridian Trust Bank.
  * Supports Anthropic Messages API (primary) and Google Gemini API (optional free-tier alternative).
  * Has zero database access and keeps API keys strictly in server environment variables.
  */
@@ -33,7 +33,7 @@ public class ChatbotService {
     private static final Duration TIMEOUT = Duration.ofSeconds(10);
 
     private static final String SYSTEM_PROMPT = """
-            You are KoshAI, a friendly, concise AI banking-help assistant for SRM Trust Bank (a university demo bank).
+            You are KoshAI, a friendly, concise AI banking-help assistant for Meridian Trust Bank (a university demo bank).
             Help users understand app features and answer common FAQs:
             - Savings accounts require a minimum balance of ₹1,000, allow up to 5 withdrawals per month, and earn 3.5% p.a. interest (credited monthly).
             - Current accounts earn 0% interest and include a ₹10,000 overdraft limit.
@@ -108,7 +108,7 @@ public class ChatbotService {
      */
     public String ask(String userMessage, List<ChatTurn> history) {
         if (userMessage == null || userMessage.isBlank()) {
-            return "Hi, I'm KoshAI! Ask me anything about SRM Trust Bank accounts, transfers, calculators, or statements.";
+            return "Hi, I'm KoshAI! Ask me anything about Meridian Trust Bank accounts, transfers, calculators, or statements.";
         }
         if (apiKey != null && !apiKey.isBlank()) {
             return askAnthropic(userMessage, history);
@@ -269,7 +269,7 @@ public class ChatbotService {
     private String buildOfflineFallback(String userMessage) {
         String q = userMessage.toLowerCase();
         if (q.matches(".*\\b(hi|hello|hey|namaste)\\b.*")) {
-            return "Hello! I'm KoshAI, your SRM Trust Bank assistant (currently in offline FAQ mode). "
+            return "Hello! I'm KoshAI, your Meridian Trust Bank assistant (currently in offline FAQ mode). "
                     + "Ask me about Savings vs Current accounts, transfers, calculators, or statement exports!";
         }
         if (q.contains("advice") || q.contains("invest") || q.contains("stock") || q.contains("legal")) {

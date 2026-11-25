@@ -41,7 +41,7 @@ class StatementServiceTest {
 
         assertTrue(txtFile.exists());
         assertTrue(csvFile.exists());
-        assertTrue(Files.readString(txtFile.toPath()).contains("SRM TRUST BANK"));
+        assertTrue(Files.readString(txtFile.toPath()).contains("MERIDIAN TRUST BANK"));
 
         List<Transaction> imported = service.importFromCsv(csvFile);
         assertEquals(2, imported.size());

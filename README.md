@@ -1,4 +1,4 @@
-# SRM Trust Bank — Banking Management System (CSE 213)
+# Meridian Trust Bank — Banking Management System (CSE 213)
 
 A complete **Advanced Java Programming (CSE 213)** banking management system built with **Java 17**, **plain JDBC + SQLite**, **JavaFX 21**, **Javalin 6 REST API**, **JDK `HttpClient` AI Chatbot**, and a **static web frontend**.
 

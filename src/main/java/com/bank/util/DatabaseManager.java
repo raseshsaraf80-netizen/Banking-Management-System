@@ -163,7 +163,7 @@ public class DatabaseManager {
 
             // Seed Admin + 3 sample customers (Aarav, Meera, Kabir)
             insertSeedCustomer(conn, "Admin User", "admin@bank.local", "9999900000",
-                    "SRM Trust Bank HQ", PasswordUtil.hashPassword("Admin@123"), Role.ADMIN, now);
+                    "Meridian Trust Bank HQ", PasswordUtil.hashPassword("Admin@123"), Role.ADMIN, now);
             long aaravId = insertSeedCustomer(conn, "Aarav Sharma", "aarav@bank.local", "9876543210",
                     "Vijayawada, AP", PasswordUtil.hashPassword("Aarav@123"), Role.CUSTOMER, now);
             long meeraId = insertSeedCustomer(conn, "Meera Nair", "meera@bank.local", "9876543211",

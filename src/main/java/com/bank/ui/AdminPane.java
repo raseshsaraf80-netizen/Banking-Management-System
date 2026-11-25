@@ -328,7 +328,7 @@ public class AdminPane extends ScrollPane {
             // TreeView
             Map<Long, List<Account>> grouped = filteredAccounts.stream()
                     .collect(Collectors.groupingBy(Account::getCustomerId));
-            TreeItem<String> rootNode = new TreeItem<>("SRM Trust Bank Customers & Accounts");
+            TreeItem<String> rootNode = new TreeItem<>("Meridian Trust Bank Customers & Accounts");
             rootNode.setExpanded(true);
 
             for (Map.Entry<Long, List<Account>> entry : grouped.entrySet()) {

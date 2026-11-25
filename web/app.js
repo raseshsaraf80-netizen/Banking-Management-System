@@ -890,7 +890,7 @@ document.getElementById("cashForm").addEventListener("submit", async (e) => {
     document.getElementById("cashAmount").value = "";
     document.getElementById("cashDesc").value = "";
     await refreshPortalData();
-    openInfoModal("TRANSACTION COMPLETED", "SRM Trust Bank Receipt", [
+    openInfoModal("TRANSACTION COMPLETED", "Meridian Trust Bank Receipt", [
       ["Reference ID", `#${txn.txnId}`],
       ["Account", accNo],
       ["Operation", txn.type],
@@ -1006,7 +1006,7 @@ async function loadStatementTable() {
         <td class="no-print"><button type="button" class="btn-xs btn-xs-dark view-rcpt-btn">Receipt</button></td>
       `;
       tr.querySelector(".view-rcpt-btn").addEventListener("click", () => {
-        openInfoModal("TRANSACTION RECORD", "SRM Trust Bank Receipt", [
+        openInfoModal("TRANSACTION RECORD", "Meridian Trust Bank Receipt", [
           ["Reference ID", `#${t.txnId}`],
           ["Account", t.accountNumber],
           ["Type", t.type],
