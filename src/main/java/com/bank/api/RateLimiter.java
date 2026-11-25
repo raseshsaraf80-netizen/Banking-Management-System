@@ -1,10 +1,8 @@
 // Author: Rasesh Saraf
-// Concept: Thread-safe sliding-window in-memory rate limiter for login and chat routes
+// Concept: Simple per-IP request counter for rate limiting login and chat routes
 package com.bank.api;
 
 import java.time.Instant;
-import java.util.ArrayDeque;
-import java.util.Deque;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -13,28 +11,37 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class RateLimiter {
 
+    private static class Counter {
+        long windowStart;
+        int count;
+
+        Counter(long windowStart) {
+            this.windowStart = windowStart;
+        }
+    }
+
     private final int maxRequests;
     private final long windowSeconds;
-    private final Map<String, Deque<Long>> requestLog = new ConcurrentHashMap<>();
+    private final Map<String, Counter> counters = new ConcurrentHashMap<>();
 
     public RateLimiter(int maxRequests, long windowSeconds) {
         this.maxRequests = maxRequests;
         this.windowSeconds = windowSeconds;
     }
 
-    public boolean allow(String key) {
+    public boolean allow(String ip) {
         long now = Instant.now().getEpochSecond();
-        Deque<Long> timestamps = requestLog.computeIfAbsent(key, k -> new ArrayDeque<>());
-        synchronized (timestamps) {
-            while (!timestamps.isEmpty() && (now - timestamps.peekFirst()) >= windowSeconds) {
-                timestamps.pollFirst();
+        Counter c = counters.computeIfAbsent(ip, k -> new Counter(now));
+        synchronized (c) {
+            if (now - c.windowStart >= windowSeconds) {
+                c.windowStart = now;
+                c.count = 0;
             }
-            if (timestamps.size() >= maxRequests) {
+            if (c.count >= maxRequests) {
                 return false;
             }
-            timestamps.addLast(now);
+            c.count++;
             return true;
         }
     }
 }
-
