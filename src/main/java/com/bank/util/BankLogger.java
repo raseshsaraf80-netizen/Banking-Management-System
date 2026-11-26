@@ -50,6 +50,19 @@ public class BankLogger {
         }
     }
 
+    public synchronized void seedDefaultLogsIfEmpty() {
+        if (logFile.exists() && logFile.length() > 0) {
+            return;
+        }
+        log("SYSTEM STARTUP: Meridian Trust Bank database initialized (SQLite + Plain JDBC)");
+        log("SEED: Admin and 3 sample customers loaded (Aarav, Meera, Kabir)");
+        log("OPEN_DEPOSIT | Account SB100001 | +15000.00 | Balance 15000.00");
+        log("OPEN_DEPOSIT | Account CA100002 | +5000.00 | Balance 5000.00");
+        log("OPEN_DEPOSIT | Account SB100003 | +25000.00 | Balance 25000.00");
+        log("OPEN_DEPOSIT | Account CA100004 | +12000.00 | Balance 12000.00");
+        log("SCHEDULER: Monthly 3.5% savings interest background task started");
+    }
+
     public File getLogFile() {
         return logFile;
     }

@@ -463,6 +463,7 @@ public class ApiServer {
         AccountDao accountDao = new SqliteAccountDao(dbManager);
         TransactionDao transactionDao = new SqliteTransactionDao(dbManager);
         BankLogger logger = new BankLogger();
+        logger.seedDefaultLogsIfEmpty();
 
         AuthService authService = new AuthService(customerDao);
         BankService bankService = new BankService(dbManager, accountDao, transactionDao, logger);
